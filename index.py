@@ -1,16 +1,10 @@
 # -*- coding: utf8 -*-
 import json
 import datetime
-
 import requests
 import random
-from requests.sessions import session
 from user import User
-
-
 mysession = requests.session()
-
-
 class UserApi:
     def __init__(self, user: User) -> None:
         self.user = user
@@ -33,10 +27,11 @@ class UserApi:
         "school": "oit",
         "id_code": self.user.password  # 身份证后6位
                 }
-        mysession.post(url=url, data=data,headers=headers)
-    #填报
-    def report(self):
+        res=requests.post(url=url, data=data,headers=headers)
+        return res.cookies
 
+    #填报
+    def report(self,cookie):
         #填报链接
         url = 'http://open.smilecampus.cn/app.php/epidemic_survey/index/report_by_day'
 
@@ -48,9 +43,9 @@ class UserApi:
         }
         
         #获取前一天的体温填报信息进行填报
-        info = json.loads(mysession.get(url2).text)
+        info = json.loads(requests.get(url2,cookies=cookie).text)
         yesterday = (datetime.date.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-        # print(info["data"][yesterday]["address"]["address"])
+        userAddress = (info["data"][yesterday]["address"]["address"])
 
 
 
@@ -85,14 +80,15 @@ class UserApi:
             
             }
        #post填报
-        res = mysession.post(url,headers=headers,data=data).text
+        res = requests.post(url,headers=headers,data=data,cookies=cookie).text
         print(res)
+
 
         self.detail = res
         if "感谢填报" in res :
-            self.info = "填报成功"
+            self.info = userAddress + "填报成功"
         else:
-            self.info = "填报失败"
+            self.info  =  "填报失败"
 
 
          
